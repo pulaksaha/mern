@@ -1,0 +1,56 @@
+>>APP.JS
+
+import './App.css';
+import { useState } from 'react';
+import axios from 'axios';
+
+export default function App() {
+  const [form, setForm] = useState({ uname: '', pass: '' });
+
+  const handleForm = e => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    const { data } = await axios.post('http://127.0.0.1:8080/demo', form);
+    alert(data);
+  };
+
+  return (
+    <div>
+      <h2>Personal Details</h2>
+      <form onSubmit={handleSubmit} className="personal">
+        <span>User Name :</span>
+        <input type="text" name="uname" onChange={handleForm} />
+        <br /><br />
+        <span>Password :</span>
+        <input type="password" name="pass" onChange={handleForm} />
+        <br /><br />
+        <input type="submit" value="Submit" />
+      </form>
+    </div>
+  );
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+>> INDEX.JS
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+
+mongoose.set('strictQuery', true);
+mongoose.connect('mongodb://127.0.0.1:27017/local').then(() => console.log('DB Connected'));
+
+const User = mongoose.model('users', new mongoose.Schema({
+  uname: String,
+  pass: String
+}));
+
+const app = express();
+app.use(cors(), express.json());
+
+app.post('/demo', async (req, res) => {
+  const user = await User.findOne(req.body);
+  res.json(user ? 'Login Successful' : 'Invalid Username or Password');
+});
+
+app.listen(8080, () => console.log('Server Started')); 

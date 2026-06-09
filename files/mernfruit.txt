@@ -1,0 +1,76 @@
+>> APP.JS
+
+import './App.css';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
+export default function App() {
+  const [form, setForm] = useState({ fname: '', price: '' });
+  const [users, setUsers] = useState([]);
+
+  const getUsers = async () =>
+    setUsers((await axios.get('http://127.0.0.1:8080/data')).data);
+
+  useEffect(() => { getUsers(); }, []);
+
+  const handleChange = e =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    await axios.post('http://127.0.0.1:8080/demo', form);
+    getUsers();
+  };
+
+  return (
+    <div>
+      <h2>Personal Details</h2>
+      <form onSubmit={handleSubmit} className="personal">
+        <span>Fruit Name :</span>
+        <input type="text" name="fname" onChange={handleChange} />
+        <br /><br />
+        <span>Price :</span>
+        <input type="number" name="price" onChange={handleChange} />
+        <br /><br />
+        <input type="submit" />
+      </form>
+
+      <br />
+
+      <table border="1">
+        <tbody>
+          {users.map((row, k) => (
+            <tr key={k}>
+              <td>{row.fname}</td>
+              <td>{row.price}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+>> BACKEND.JS
+
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+mongoose.connect('mongodb://127.0.0.1:27017/local').then(() => console.log('DB Connected'));
+
+const User = mongoose.model('fruits', new mongoose.Schema({
+  fname: String,
+  price: Number
+}));
+
+app.post('/demo', async (req, res) => res.json(await new User(req.body).save()));
+app.get('/data', async (req, res) => res.json(await User.find()));
+
+app.listen(8080, () => console.log('Server Started'));
